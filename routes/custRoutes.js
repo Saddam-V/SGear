@@ -6,10 +6,14 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(authController.protect, authController.restrictTo("admin"), custController.getAllCust)
+  .get(custController.getAllCust)
   .post(authController.protect, authController.restrictTo("admin"), custController.createCust);
-router.route("/search/:cat").get(authController.protect, authController.restrictTo("admin"), custController.getCustSearch);
-router.route("/custDetails/:name?/:number?").get(authController.protect, authController.restrictTo("admin"), custController.getCustDetails);
+router
+  .route("/search/:cat")
+  .get(authController.protect, authController.restrictTo("admin"), custController.getCustSearch);
+router
+  .route("/custDetails/:name?/:number?")
+  .get(authController.protect, authController.restrictTo("admin"), custController.getCustDetails);
 
 // router.route("/validate").post();
 

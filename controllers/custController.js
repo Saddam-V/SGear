@@ -1,27 +1,20 @@
 const APIFeatures = require("../utils/apiFeatures");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError");
 const Cust = require("../models/custModel");
 const Bill = require("../models/billModel");
 
-exports.createCust = async (req, res) => {
-  //   try {
-  // const newCust = new Cust({})
-  // newCust.save()
+exports.createCust = catchAsync(async (req, res, next) => {
   const newobj = {
     custName: req.custName,
     custNum: req.custNum,
     orders: req.orders,
   };
   const newCust = await Cust.create(newobj);
-  //   } catch (err) {
-  //     throw err;
-  //   }
-};
+});
 
-exports.getCustDetails = async (req, res) => {
-  // try {
-  console.log("in");
+exports.getCustDetails = catchAsync(async (req, res, next) => {
   const name = req.params.name;
-  console.log(name);
   const num = req.params.number;
 
   const currentMonth = new Date().getMonth() + 1;
@@ -57,8 +50,6 @@ exports.getCustDetails = async (req, res) => {
     const priceDiscount = parseFloat(bill.priceDiscount) || 0;
     return acc + priceDiscount;
   }, 0);
-
-  ////
 
   const currentMonthBills = totalBills.filter((bill) => {
     console.log(currentMonth);
@@ -97,18 +88,6 @@ exports.getCustDetails = async (req, res) => {
     return acc + priceDiscount;
   }, 0);
 
-  // Include the totalSum in the response
-  // console.log(
-  //   totalBills,
-  //   currentMonthBills,
-  //   totalSum,
-  //   totalDiscount,
-  //   currentMonthDiscount,
-  //   currentMonthSum,
-  //   unpaidBills,
-  //   unpaidSum,
-  //   currentMonthUnpaidSum
-  // );
   res.json({
     name,
     num,
@@ -123,17 +102,12 @@ exports.getCustDetails = async (req, res) => {
     currentMonthUnpaidSum,
     currentMonthUnpaid,
   });
-  // } catch (err) {
-  //   res.status(500).json({ message: err.message });
-  // }
-};
+});
 
-exports.getAllCust = async (req, res) => {
-  // try {
-  // EXECUTE QUERY
+exports.getAllCust = catchAsync(async (req, res, next) => {
+  console.log("Headers", req.headers.authorization);
   const features = new APIFeatures(Cust.find(), req.query).filter().sort().limitFields().paginate();
   const custs = await features.query;
-  // const featuresBill = new APIFeatures(Bill.find(), req.query).filter().sort().limitFields().paginate();
   const bills = await Bill.find();
 
   const currentMonth = new Date().getMonth() + 1;
@@ -215,34 +189,21 @@ exports.getAllCust = async (req, res) => {
       totalDiscount,
     },
   });
-  // } catch (err) {
-  //   res.status(400).json({
-  //     status: "failed",
-  //     message: err,
-  //   });
-  // }
-};
+});
 
-exports.getCustSearch = async (req, res) => {
-  try {
-    const cat = req.params.cat;
+exports.getCustSearch = catchAsync(async (req, res, next) => {
+  const cat = req.params.cat;
 
-    const custs = await Cust.aggregate([
-      {
-        $match: { $or: [{ custName: cat }, { custNum: cat }, { startDates: cat }] },
-      },
-    ]);
+  const custs = await Cust.aggregate([
+    {
+      $match: { $or: [{ custName: cat }, { custNum: cat }, { startDates: cat }] },
+    },
+  ]);
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        custs,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
+  res.status(200).json({
+    status: "success",
+    data: {
+      custs,
+    },
+  });
+});

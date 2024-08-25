@@ -1,59 +1,46 @@
 const APIFeatures = require("../utils/apiFeatures");
+const catchAsync = require("../utils/catchAsync");
+const AppError = require("../utils/appError");
+const factory = require("./handlerFactory");
 const totalStockController = require("../controllers/totalStockController");
 const stockTransactionController = require("../controllers/stockTransactionController");
 const custController = require("../controllers/custController");
 const Bill = require("../models/billModel");
 var fs = require("fs");
-const Cat = require("../models/catModel");
+const Catalogue = require("../models/catModel");
 const Cust = require("../models/custModel");
 const moment = require("moment");
 const mongoose = require("mongoose");
 
-exports.getunpaid = async (req, res) => {
-  try {
-    // const bills = await Bill.find();
-    const unpaidBills = await Bill.find({
-      billPaid: false,
-    });
+exports.getunpaid = catchAsync(async (req, res, next) => {
+  const unpaidBills = await Bill.find({
+    billPaid: false,
+  });
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        unpaidBills,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "error",
-      message: err.message,
-    });
-  }
-};
+  res.status(200).json({
+    status: "success",
+    data: {
+      unpaidBills,
+    },
+  });
+});
 
-exports.getunupdatedDiscount = async (req, res) => {
-  try {
-    // const bills = await Bill.find();
-    const unpaidBills = await Bill.find({
-      discountUpdated: false,
-    });
+exports.getunupdatedDiscount = catchAsync(async (req, res, next) => {
+  // const bills = await Bill.find();
+  const unpaidBills = await Bill.find({
+    discountUpdated: false,
+  });
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        unpaidBills,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: "error",
-      message: err.message,
-    });
-  }
-};
+  res.status(200).json({
+    status: "success",
+    data: {
+      unpaidBills,
+    },
+  });
+});
 
-exports.getinsight = async (req, res) => {
+exports.getinsight = catchAsync(async (req, res, next) => {
   let startDate, endDate;
-
   // // Check if start and end dates are provided in the request parameters
   if (req.params.start && req.params.end) {
     startDate = new Date(req.params.start);
@@ -65,7 +52,6 @@ exports.getinsight = async (req, res) => {
     endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   }
 
-  // try {
   let bills;
   endDate.setDate(endDate.getDate() + 1);
   // Format the dates to match the format in the database
@@ -86,13 +72,7 @@ exports.getinsight = async (req, res) => {
       bills,
     },
   });
-  // } catch (err) {
-  //   res.status(500).json({
-  //     status: "error",
-  //     message: err.message,
-  //   });
-  // }
-};
+});
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -109,402 +89,193 @@ function padZero(number) {
   return number < 10 ? "0" + number : number;
 }
 
-exports.findRate = async (req, res) => {
-  try {
-    const doc = await Cat.findOne({ catNum: req.body.catNum });
+exports.findRate = catchAsync(async (req, res, next) => {
+  const doc = await Catalogue.findOne({ catNum: req.body.catNum });
 
-    if (doc === null) {
-      throw "No catalog";
-    } else {
-      const arr = doc.orders;
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i].colNum === req.body.colNum) {
-          const rate = arr[i].rate;
-          res.send(rate.toString());
-        }
+  if (!doc) {
+    return next(new AppError("No Catalogue Found to find rate", 404));
+  } else {
+    const arr = doc.orders;
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i].colNum === req.body.colNum) {
+        const rate = arr[i].rate;
+        res.send(rate.toString());
       }
     }
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
   }
-};
+});
 
-exports.validateData = async (req, res) => {
-  // console.log("in validation");
-  // console.log(req.body);
+exports.validateData = catchAsync(async (req, res, next) => {
+  await totalStockController.billValidate(req, res, next);
+});
 
-  try {
-    await totalStockController.billValidate(req, res);
-    res.status(200).json({
-      status: "success",
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
+exports.getNumber = catchAsync(async (req, res, next) => {
+  const doc = await Catalogue.findOne({ catNum: req.params.custName });
+
+  if (!doc) {
+    return next(new AppError("No Customer Found by that name", 404));
   }
-};
-
-exports.getNumber = async (req, res) => {
-  try {
-    const doc = await Cat.findOne({ catNum: req.params.custName });
-
-    res.status(200).json({
-      status: "success",
-      data: doc,
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
-
-exports.getBillNum = async (req, res) => {
-  // try {
-  const billNo = fs.readFileSync("./public/bill.txt", "utf-8");
   res.status(200).json({
     status: "success",
-    data: billNo,
+    data: doc,
   });
+});
+
+const getBillNum = () => {
+  const billNo = fs.readFileSync("./dev-data/billNo.txt", "utf-8");
   const newBillNum = parseInt(billNo) + 1;
-  fs.writeFileSync("./public/bill.txt", newBillNum.toString());
-  // } catch (err) {
-  //   res.status(404).json({
-  //     status: "fail",
-  //     message: err,
-  //   });
-  // }
+  fs.writeFileSync("./dev-data/billNo.txt", newBillNum.toString());
+  return billNo;
 };
 
-exports.createBill = async (req, res) => {
+exports.createBill = catchAsync(async (req, res, next) => {
   const data = req.body.orders;
-
-  // var str = fs.readFileSync(`${__dirname}/../dev-data/billNo.txt`, "utf8"); // This will block the event loop, not recommended for non-cli programs.
-  // console.log("result read: " + str);
-  // try {
-  const existingBill = await Bill.findOne({ billNum: req.body.billNum.data });
+  console.log(req.body);
+  const customerName = req.body.customerName;
+  const customerNumber = req.body.customerNumber;
+  const discount = req.body.discount;
+  const totalPrice = req.body.totalPrice;
+  const billNo = getBillNum();
+  const existingBill = await Bill.findOne({ billNum: billNo });
   if (existingBill) {
-    // Bill already exists, return success or a specific response
-    return res.status(404).json({
-      message: "Bill already created",
-      data: existingBill, // You might want to return the existing bill data
-    });
+    return next(new AppError("Bill Already Exists", 500)); // Bill already exists, return success or a specific response
   }
 
-  for (let index = 0; index < data.length; index++) {
-    await totalStockController.billCreated(data[index], res);
-    console.log(JSON.parse(data[index]));
-    await stockTransactionController.createStock(JSON.parse(data[index]), res);
-  }
-  let prc = 0;
-  for (let index = 0; index < data.length; index++) {
-    data[index] = JSON.parse(data[index]);
-    prc = prc + parseFloat(data[index].meter) * parseFloat(data[index].rate);
-  }
+  // Process all orders and ensure that billCreated does not encounter any errors
+  for (let order of data) {
+    const modifiedOrder = { ...order, custName: customerName };
 
-  prc = prc - data[data.length - 1].priceDiscount;
+    try {
+      await totalStockController.billCreated(order, res, next);
+      await stockTransactionController.createStock(JSON.stringify(modifiedOrder), res, next);
+    } catch (error) {
+      return next(error); // Stop processing further if an error is encountered
+    }
+  }
 
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
 
   myobj = {
-    custName: data[data.length - 1].custName,
-    custNum: data[data.length - 1].custNum,
-    billNum: req.body.billNum.data,
+    custName: customerName,
+    custNum: customerNumber,
+    billNum: billNo,
     orders: data,
-    price: prc.toString(),
-    priceDiscount: data[data.length - 1].priceDiscount,
+    price: totalPrice,
+    priceDiscount: discount,
     startDates: currentDateTime,
   };
-  const doc = await Cust.findOne({ custName: data[0].custName });
+  const doc = await Cust.findOne({ custName: customerName });
 
   if (doc === null) {
     myobj2 = {
-      custName: data[0].custName,
-      custNum: data[0].custNum,
+      custName: customerName,
+      custNum: customerNumber,
     };
-    // console.log(myobj2);
     await custController.createCust(myobj, res);
   } else {
     await doc.orders.push(...data);
-    await Cust.updateOne({ custName: data[0].custName }, doc);
+    await Cust.updateOne({ custName: customerName }, doc);
   }
   await Bill.create(myobj);
 
-  // newstr = parseInt(str) += 1;
-  // fs.writeFile(`${__dirname}/dev-data/data/tours-simple.json`, newstr);
-  // res.statusMessage = str.toString();
   res.status(200).json({
     data: myobj,
   });
-  // } catch (err) {
-  //   res.status(404).json({
-  //     status: "fail",
-  //     message: err,
-  //   });
-  // }
-};
+});
 
-exports.billPaid = async (req, res) => {
-  try {
-    // Get required data from request body
-    const { billNum } = req.body;
+exports.billPaid = catchAsync(async (req, res, next) => {
+  const { billNum } = req.body; // Get required data from request body
 
-    // Validate input data (optional)
-    if (!billNum) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Missing required fields: billNum",
-      });
-    }
-
-    // Find the bill to update
-    const bill = await Bill.findOne({ billNum });
-
-    if (bill.billPaid) {
-      return res.status(400).json({
-        status: "fail",
-        message: "This bill has already been paid",
-      });
-    }
-
-    // Check if bill exists
-    if (!bill) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Bill not found",
-      });
-    }
-
-    // Update price if the bill already has a price
-    if (bill.price) {
-      bill.billPaid = true;
-    } else {
-      console.warn("Bill price not found.");
-      return res.status(400).json({
-        // Return 400 for update failure
-        status: "fail",
-        message: "Price not found for bill. Update failed.",
-      });
-    }
-
-    // Save updated bill
-    await bill.save();
-
-    // Return updated bill data
-    res.status(200).json({
-      data: bill,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      status: "error",
-      message: "Internal server error",
-    });
+  if (!billNum) {
+    return next(new AppError("Bill Number is Missing", 500)); // Validate input data (optional)
   }
-};
 
-exports.updateDiscount = async (req, res) => {
-  try {
-    // Get required data from request body
-    const { billNum, priceDiscount } = req.body;
-
-    // Validate input data (optional)
-    if (!billNum || !priceDiscount) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Missing required fields: billNum, priceDiscount",
-      });
-    }
-
-    // Find the bill to update
-    const bill = await Bill.findOne({ billNum });
-
-    if (bill.discountUpdated) {
-      return res.status(400).json({
-        status: "fail",
-        message: "Discount for this bill has already been updated.",
-      });
-    }
-
-    // Check if bill exists
-    if (!bill) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Bill not found",
-      });
-    }
-
-    // Update price if the bill already has a price
-    if (bill.price) {
-      bill.price = (parseFloat(bill.price) - parseFloat(priceDiscount)).toString();
-      bill.priceDiscount = parseFloat(priceDiscount) + parseFloat(bill.priceDiscount); // Update discount only if price is updated
-      bill.discountUpdated = true;
-    } else {
-      console.warn("Bill price not found. Price and discount cannot be updated.");
-      return res.status(400).json({
-        // Return 400 for update failure
-        status: "fail",
-        message: "Price not found for bill. Update failed.",
-      });
-    }
-
-    // Save updated bill
-    await bill.save();
-
-    // Return updated bill data
-    res.status(200).json({
-      data: bill,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      status: "error",
-      message: "Internal server error",
-    });
+  const bill = await Bill.findById(billNum); // Find the bill to update
+  if (bill.billPaid) {
+    return next(new AppError("This bill is already paid", 500));
   }
-};
 
-exports.getAllBill = async (req, res) => {
-  try {
-    // EXECUTE QUERY
-    const features = new APIFeatures(Bill.find(), req.query).filter().sort().limitFields().paginate();
-    const bills = await features.query;
+  if (!bill) {
+    return next(new AppError("Bill Not Found", 404)); // Check if bill exists
+  }
 
-    res.status(200).json({
-      status: "success",
-      results: bills.length,
-      data: {
-        bills,
+  if (bill.price) {
+    bill.billPaid = true; // Update if the bill already has a price
+  } else {
+    return next(new AppError("Price not found for bill. Update failed", 404));
+  }
+
+  await bill.save(); // Save updated bill
+
+  res.status(200).json({
+    data: bill, // Return updated bill data
+  });
+});
+
+exports.updateDiscount = catchAsync(async (req, res, next) => {
+  // Get required data from request body
+  const { priceDiscount } = req.body;
+  const billNum = req.body.id;
+
+  // Validate input data (optional)
+  if (!billNum || !priceDiscount) {
+    return next(new AppError("Bill Number or Discount price is missing", 500));
+  }
+
+  // Find the bill to update
+  const bill = await Bill.findById(billNum);
+
+  if (bill.discountUpdated) {
+    return next(new AppError("Discount for this bill has already been paid", 500));
+  }
+
+  // Check if bill exists
+  if (!bill) {
+    return next(new AppError("Bill not found", 404));
+  }
+
+  // Update price if the bill already has a price
+  if (bill.price) {
+    bill.price = (parseFloat(bill.price) - parseFloat(priceDiscount)).toString();
+    bill.priceDiscount = parseFloat(priceDiscount) + parseFloat(bill.priceDiscount); // Update discount only if price is updated
+    bill.discountUpdated = true;
+  } else {
+    return next(new AppError("Bill price not found. Price and discount cannot be updated.", 404));
+  }
+
+  // Save updated bill
+  await bill.save();
+
+  // Return updated bill data
+  res.status(200).json({
+    data: bill,
+  });
+});
+
+exports.getAllBill = factory.getAll(Bill);
+exports.updateBill = factory.updateOne(Bill);
+exports.deleteBill = factory.deleteOne(Bill);
+exports.getSingleBill = factory.getOne(Bill);
+
+exports.getBillSearch = catchAsync(async (req, res, next) => {
+  const cat = req.params.cat;
+
+  const bills = await Bill.aggregate([
+    {
+      $match: {
+        $or: [
+          { custName: { $regex: cat, $options: "i" } }, // Case-insensitive substring match
+          { custNum: { $regex: cat, $options: "i" } },
+          { startDates: { $regex: cat, $options: "i" } },
+        ],
       },
-    });
-  } catch (err) {
-    res.status(400).json({
-      status: "failed",
-      message: err,
-    });
-  }
-};
+    },
+  ]);
 
-exports.getBill = async (req, res) => {
-  try {
-    const bill = await Bill.findById(req.params.id);
-    // Bill.findOne({ _id: req.params.id })
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        bill,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
-
-exports.updateBill = async (req, res) => {
-  try {
-    const bill = await Bill.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        bill,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
-
-exports.deleteBill = async (req, res) => {
-  try {
-    await Bill.findByIdAndDelete(req.params.id);
-
-    res.status(204).json({
-      status: "success",
-      data: null,
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
-
-exports.getSingleBill = async (req, res) => {
-  try {
-    const id = req.params.id;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      // Check if the provided id is a valid ObjectId
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid ObjectId",
-      });
-    }
-
-    const bills = await Bill.aggregate([
-      {
-        $match: { _id: mongoose.Types.ObjectId(id) },
-      },
-    ]);
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        bills,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
-
-exports.getBillSearch = async (req, res) => {
-  try {
-    const cat = req.params.cat;
-
-    const bills = await Bill.aggregate([
-      {
-        $match: {
-          $or: [
-            { custName: { $regex: cat, $options: "i" } }, // Case-insensitive substring match
-            { custNum: { $regex: cat, $options: "i" } },
-            { startDates: { $regex: cat, $options: "i" } },
-          ],
-        },
-      },
-    ]);
-
-    res.status(200).json({
-      status: "success",
-      data: {
-        bills,
-      },
-    });
-  } catch (err) {
-    res.status(404).json({
-      status: "fail",
-      message: err,
-    });
-  }
-};
+  res.status(200).json({
+    status: "success",
+    data: {
+      bills,
+    },
+  });
+});

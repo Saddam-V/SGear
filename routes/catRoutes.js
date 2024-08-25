@@ -8,8 +8,17 @@ router
   .route("/")
   .get(authController.protect, authController.restrictTo("admin"), catController.getAllCat)
   .post(authController.protect, catController.createCat);
-router.route("/search/:cat").get(authController.protect, authController.restrictTo("admin"), catController.getCatSearch);
-router.put("/updateCatOrders", authController.protect, authController.restrictTo("admin"), catController.updateCatOrders);
+
+router.post(
+  "/updateCatOrders",
+  authController.protect,
+  authController.restrictTo("admin"),
+  catController.updateCatOrders
+);
+
+router
+  .post("/:id/add-order", catController.addOrderToCatalogue)
+  .put("/:id/add-order", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue);
 // router.route("/validate").post();
 
 router.route("/:id").get(catController.getCat).patch(catController.updateCat).delete(catController.deleteCat);

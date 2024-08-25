@@ -1,0 +1,1 @@
+Header set Content-Security-Policy "script-src 'self' https://cdn.datatables.net https://code.jquery.com 'nonce-U08U2qCfwi3op1u+arSzgg=='"
