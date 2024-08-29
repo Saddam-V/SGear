@@ -23,46 +23,52 @@ exports.getReturnNum = catchAsync(async (req, res, next) => {
 });
 
 exports.createReturn = catchAsync(async (req, res, next) => {
-  const data = req.body.orders;
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
-  const billNum = req.body.billNum.data; // Get billNum from request
+  const billNum = req.body.billNum; // Get billNum from request
+
+  console.log(billNum);
 
   // 1. Fetch the Bill by billNum
-  const bill = await Bill.findOne({ billNum });
+  const bill = await Bill.findById(billNum);
   if (!bill) {
     return next(new AppError("Bill not found", 404));
   }
 
-  // 2. Stock and Transaction Updates
-  for (const orderItem of bill.orders) {
-    // Iterate directly over the bill's orders
-    console.log(orderItem);
-    await totalStockController.returnCreated(orderItem);
-    orderItem.transactionType = "Return";
-    await stockTransaction.createStock(orderItem);
+  try {
+    // 2. Stock and Transaction Updates
+    for (const orderItem of bill.orders) {
+      // Iterate directly over the bill's orders
+      console.log(orderItem);
+      await totalStockController.returnCreated(orderItem);
+      orderItem.transactionType = "Return";
+      await stockTransaction.createStock(orderItem);
+    }
+
+    // 3. Calculate Price (excluding discount from the original bill)
+    let prc = bill.orders.reduce((total, orderItem) => {
+      return total + parseFloat(orderItem.meter) * parseFloat(orderItem.rate);
+    }, 0);
+
+    // 4. Create Return Order Record
+    const returnOrderData = {
+      custName: bill.custName,
+      custNum: bill.custNum,
+      retrnNum: bill.billNum,
+      orders: bill.orders, // Use the orders from the fetched bill
+      price: prc.toString(),
+      startDates: currentDateTime,
+    };
+    await returnOrder.create(returnOrderData);
+
+    // 5. Delete the Bill from the History
+    await Bill.deleteOne({ _id: billNum });
+
+    // 6. Send Response
+    res.status(200).json({ data: returnOrderData });
+  } catch (error) {
+    // Handle errors that occur during stock updates or other operations
+    return next(new AppError("Error processing return", 500));
   }
-
-  // 3. Calculate Price (excluding discount from the original bill)
-  let prc = bill.orders.reduce((total, orderItem) => {
-    return total + parseFloat(orderItem.meter) * parseFloat(orderItem.rate);
-  }, 0);
-
-  // 4. Create Return Order Record
-  const returnOrderData = {
-    custName: bill.custName,
-    custNum: bill.custNum,
-    retrnNum: req.body.billNum.data,
-    orders: bill.orders, // Use the orders from the fetched bill
-    price: prc.toString(),
-    startDates: currentDateTime,
-  };
-  await returnOrder.create(returnOrderData);
-
-  // 5. Delete the Bill from the History
-  await Bill.deleteOne({ billNum });
-
-  // 6. Send Response
-  res.status(200).json({ data: returnOrderData });
 });
 
 exports.validateData = catchAsync(async (req, res, next) => {

@@ -15,4 +15,7 @@ router
 router.route("/getReturnNum").get(authController.protect, returnController.getReturnNum);
 router.route("/validate").post(authController.protect, returnController.validateData);
 router.route("/single/:id").get(authController.protect, returnController.getSingleReturn);
+router
+  .route("/newReturn")
+  .get(authController.protect, authController.restrictTo("admin"), returnController.createReturn);
 module.exports = router;

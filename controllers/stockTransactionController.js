@@ -13,7 +13,9 @@ const TotalStock = require("../models/totalStockModel");
 exports.getAllTransactions = factory.getAll(Transaction);
 
 exports.createStock = catchAsync(async (req, res, next) => {
-  req = JSON.parse(req);
+  if (typeof req === "string") {
+    req = JSON.parse(req);
+  }
   const { custName, catNum, colNum, meter, reason, transactionType, rate } = req;
 
   // Extract rate from color entry

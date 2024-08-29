@@ -130,15 +130,30 @@ const getBillNum = () => {
 
 exports.createBill = catchAsync(async (req, res, next) => {
   const data = req.body.orders;
-  console.log(req.body);
-  const customerName = req.body.customerName;
-  const customerNumber = req.body.customerNumber;
+  let customerName = req.body.customerName.toUpperCase(); // Convert to uppercase
+  let customerNumber = req.body.customerNumber.toUpperCase(); // Convert to uppercase
   const discount = req.body.discount;
   const totalPrice = req.body.totalPrice;
   const billNo = getBillNum();
+
   const existingBill = await Bill.findOne({ billNum: billNo });
   if (existingBill) {
-    return next(new AppError("Bill Already Exists", 500)); // Bill already exists, return success or a specific response
+    return next(new AppError("Bill Already Exists", 500)); // Bill already exists, return error
+  }
+
+  // Find or create the customer to get the customerId
+  let customer = await Cust.findOne({ custName: customerName, custNum: customerNumber });
+  let customerId;
+  if (!customer) {
+    // If customer doesn't exist, create a new customer
+    const newCustomer = new Cust({
+      custName: customerName,
+      custNum: customerNumber,
+    });
+    customer = await newCustomer.save();
+    customerId = customer._id; // Get the new customerId
+  } else {
+    customerId = customer._id; // Use existing customerId
   }
 
   // Process all orders and ensure that billCreated does not encounter any errors
@@ -155,7 +170,7 @@ exports.createBill = catchAsync(async (req, res, next) => {
 
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
 
-  myobj = {
+  const myobj = {
     custName: customerName,
     custNum: customerNumber,
     billNum: billNo,
@@ -163,20 +178,16 @@ exports.createBill = catchAsync(async (req, res, next) => {
     price: totalPrice,
     priceDiscount: discount,
     startDates: currentDateTime,
+    customerId: customerId, // Add customerId to the bill
   };
-  const doc = await Cust.findOne({ custName: customerName });
 
-  if (doc === null) {
-    myobj2 = {
-      custName: customerName,
-      custNum: customerNumber,
-    };
-    await custController.createCust(myobj, res);
-  } else {
-    await doc.orders.push(...data);
-    await Cust.updateOne({ custName: customerName }, doc);
-  }
   await Bill.create(myobj);
+
+  // Update customer orders if it already exists
+  if (customer) {
+    await customer.orders.push(...data);
+    await Cust.updateOne({ _id: customerId }, customer);
+  }
 
   res.status(200).json({
     data: myobj,
@@ -186,27 +197,33 @@ exports.createBill = catchAsync(async (req, res, next) => {
 exports.billPaid = catchAsync(async (req, res, next) => {
   const { billNum } = req.body; // Get required data from request body
 
+  console.log("1");
   if (!billNum) {
     return next(new AppError("Bill Number is Missing", 500)); // Validate input data (optional)
   }
+  console.log("2");
 
   const bill = await Bill.findById(billNum); // Find the bill to update
   if (bill.billPaid) {
     return next(new AppError("This bill is already paid", 500));
   }
+  console.log("3");
 
   if (!bill) {
     return next(new AppError("Bill Not Found", 404)); // Check if bill exists
   }
+  console.log("4");
 
   if (bill.price) {
     bill.billPaid = true; // Update if the bill already has a price
   } else {
     return next(new AppError("Price not found for bill. Update failed", 404));
   }
+  console.log("5");
 
   await bill.save(); // Save updated bill
 
+  console.log("6");
   res.status(200).json({
     data: bill, // Return updated bill data
   });

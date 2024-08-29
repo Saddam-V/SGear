@@ -55,6 +55,7 @@ const billSchema = new mongoose.Schema({
       message: "Discount price ({VALUE}) should be below regular price",
     },
   },
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: "Cust", required: true }, // Reference to the customer
   createdAt: {
     type: Date,
     default: new Date(),
