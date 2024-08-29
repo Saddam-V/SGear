@@ -16,6 +16,13 @@ router.post(
   catController.updateCatOrders
 );
 
+router.post(
+  "/deleteColor",
+  authController.protect,
+  authController.restrictTo("admin"),
+  catController.deleteOrderFromCatalogue
+);
+
 router
   .post("/addOrder", catController.addOrderToCatalogue)
   .put("/addOrder", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue);

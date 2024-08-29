@@ -116,7 +116,7 @@ exports.getCustDetails = catchAsync(async (req, res, next) => {
 
 exports.getAllCust = catchAsync(async (req, res, next) => {
   console.log("Headers", req.headers.authorization);
-  const features = new APIFeatures(Cust.find(), req.query).filter().sort().limitFields().paginate();
+  const features = new APIFeatures(Cust.find(), req.query).sort();
   const custs = await features.query;
   const bills = await Bill.find();
 

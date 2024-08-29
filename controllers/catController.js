@@ -61,6 +61,35 @@ exports.addOrderToCatalogue = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.deleteOrderFromCatalogue = catchAsync(async (req, res, next) => {
+  const catalogueId = req.body.id;
+  const { colNum } = req.body;
+
+  console.log(`${catalogueId} and ${colNum} are here`);
+
+  const catalogue = await Catalogue.findById(catalogueId);
+  if (!catalogue) return next(new AppError("Catalogue not found", 404));
+
+  // Find the index of the order with the given colNum
+  const orderIndex = catalogue.orders.findIndex((order) => order.colNum === colNum);
+
+  if (orderIndex === -1) {
+    return next(new AppError("Order with this colNum does not exist", 404));
+  }
+
+  // Remove the order from the orders array
+  catalogue.orders.splice(orderIndex, 1);
+  await catalogue.save();
+
+  res.status(200).json({
+    status: "success",
+    message: "Order deleted successfully",
+    data: {
+      catalogue,
+    },
+  });
+});
+
 exports.getAllCat = factory.getAll(Catalogue);
 exports.getCat = factory.getOne(Catalogue);
 exports.updateCat = factory.updateOne(Catalogue);
