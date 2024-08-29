@@ -17,8 +17,8 @@ router.post(
 );
 
 router
-  .post("/:id/add-order", catController.addOrderToCatalogue)
-  .put("/:id/add-order", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue);
+  .post("/addOrder", catController.addOrderToCatalogue)
+  .put("/addOrder", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue);
 // router.route("/validate").post();
 
 router.route("/:id").get(catController.getCat).patch(catController.updateCat).delete(catController.deleteCat);

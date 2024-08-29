@@ -20,7 +20,8 @@ exports.createCat = catchAsync(async (req, res, next) => {
 });
 
 exports.addOrderToCatalogue = catchAsync(async (req, res, next) => {
-  const catalogueId = req.params.id;
+  const catalogueId = req.body.id;
+  console.log(catalogueId + " is here");
   const { colNum, rate, confirmUpdate } = req.body;
 
   const catalogue = await Catalogue.findById(catalogueId);
