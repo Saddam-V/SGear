@@ -17,6 +17,10 @@ const stockSchema = new mongoose.Schema({
     type: Number,
     required: [true, "must have a meter"],
   },
+  buyingRate: {
+    type: Number,
+    required: [true, "must have a buying rate"],
+  },
   // priceDiscount: {
   //   type: Number,
   //   validate: {

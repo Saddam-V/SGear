@@ -5,18 +5,11 @@ const stockSchema = new mongoose.Schema({
     type: Number,
     required: [true, "A Catalogue must have a name"],
     trim: true,
-    // maxlength: [40, "A Catalogue name must have less or equal then 40 characters"],
-    // minlength: [10, "A Catalogue name must have more or equal then 10 characters"],
-    // validate: [validator.isAlpha, 'Tour name must only contain characters']
   },
   colNum: {
     type: String,
     required: [true, "must have a number"],
   },
-  //   rate: {
-  //     type: Number,
-  //     required: [true, "must have a number"],
-  //   },
   meter: {
     type: Number,
     required: [true, "must have a meter"],
@@ -29,16 +22,30 @@ const stockSchema = new mongoose.Schema({
     type: Number,
     required: [true, "must have sale"],
   },
-  // priceDiscount: {
-  //   type: Number,
-  //   validate: {
-  //     validator: function (val) {
-  //       // this only points to current doc on NEW document creation
-  //       return val < this.price;
-  //     },
-  //     message: "Discount price ({VALUE}) should be below regular price",
-  //   },
-  // },
+  buyingRate: {
+    type: Number,
+    required: [true, "must have a buying rate"],
+  },
+  monthlyStockValue: {
+    type: Map,
+    of: Number,
+    default: {},
+  },
+  monthlyMeterAdded: {
+    type: Map,
+    of: Number,
+    default: {},
+  },
+  monthlySold: {
+    type: Map,
+    of: Number,
+    default: {},
+  },
+  monthlySoldValue: {
+    type: Map,
+    of: Number,
+    default: {},
+  },
   createdAt: {
     type: Date,
     default: Date.now(),
