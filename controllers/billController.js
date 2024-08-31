@@ -11,6 +11,7 @@ const Catalogue = require("../models/catModel");
 const Cust = require("../models/custModel");
 const moment = require("moment");
 const mongoose = require("mongoose");
+const getBillNum = require("../utils/getBillNum");
 
 exports.getunpaid = catchAsync(async (req, res, next) => {
   const unpaidBills = await Bill.find({
@@ -121,12 +122,12 @@ exports.getNumber = catchAsync(async (req, res, next) => {
   });
 });
 
-const getBillNum = () => {
-  const billNo = fs.readFileSync("./dev-data/billNo.txt", "utf-8");
-  const newBillNum = parseInt(billNo) + 1;
-  fs.writeFileSync("./dev-data/billNo.txt", newBillNum.toString());
-  return billNo;
-};
+// const getBillNum = () => {
+//   const billNo = fs.readFileSync("./dev-data/billNo.txt", "utf-8");
+//   const newBillNum = parseInt(billNo) + 1;
+//   fs.writeFileSync("./dev-data/billNo.txt", newBillNum.toString());
+//   return billNo;
+// };
 
 exports.createBill = catchAsync(async (req, res, next) => {
   const data = req.body.orders;
@@ -134,8 +135,9 @@ exports.createBill = catchAsync(async (req, res, next) => {
   let customerNumber = req.body.customerNumber.toUpperCase(); // Convert to uppercase
   const discount = req.body.discount;
   const totalPrice = req.body.totalPrice;
-  const billNo = getBillNum();
+  const billNo = await getBillNum();
 
+  // console.log(billNo);
   const existingBill = await Bill.findOne({ billNum: billNo });
   if (existingBill) {
     return next(new AppError("Bill Already Exists", 500)); // Bill already exists, return error
@@ -156,18 +158,6 @@ exports.createBill = catchAsync(async (req, res, next) => {
     customerId = customer._id; // Use existing customerId
   }
 
-  // Process all orders and ensure that billCreated does not encounter any errors
-  for (let order of data) {
-    const modifiedOrder = { ...order, custName: customerName };
-
-    try {
-      await totalStockController.billCreated(order, res, next);
-      await stockTransactionController.createStock(JSON.stringify(modifiedOrder), res, next);
-    } catch (error) {
-      return next(error); // Stop processing further if an error is encountered
-    }
-  }
-
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
 
   const myobj = {
@@ -182,6 +172,18 @@ exports.createBill = catchAsync(async (req, res, next) => {
   };
 
   await Bill.create(myobj);
+
+  // Process all orders and ensure that billCreated does not encounter any errors
+  for (let order of data) {
+    const modifiedOrder = { ...order, custName: customerName };
+
+    try {
+      await totalStockController.billCreated(order.catNum, order.colNum, order.meter, order.rate); // Adjusted parameters
+      await stockTransactionController.createStock(modifiedOrder); // Passing modified order directly
+    } catch (error) {
+      return next(error); // Stop processing further if an error is encountered
+    }
+  }
 
   // Update customer orders if it already exists
   if (customer) {

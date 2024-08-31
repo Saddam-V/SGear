@@ -30,15 +30,13 @@ exports.returnValidate = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.billCreated = catchAsync(async (req, res, next) => {
+// Assume that billCreated now accepts individual parameters instead of req, res, next
+exports.billCreated = async (catNum, colNum, meter, rate) => {
   const currentMonthYear = moment().format("MM-YYYY");
-  const { catNum, colNum, meter, rate } = req; // Destructuring rate from request body
-  console.log("Entered");
-  console.log("rate" + rate);
-  const doc = await TotalStock.findOne({ catNum, colNum });
 
+  const doc = await TotalStock.findOne({ catNum, colNum });
   if (doc === null || parseFloat(doc.meter) - parseFloat(meter) < 0) {
-    return next(new AppError("Catalogue not found or insufficient stock", 404));
+    throw new AppError("Catalogue not found or insufficient stock", 404);
   } else {
     const meterToReduce = parseFloat(meter);
     const soldValue = meterToReduce * parseFloat(rate);
@@ -66,7 +64,7 @@ exports.billCreated = catchAsync(async (req, res, next) => {
       runValidators: true,
     });
   }
-});
+};
 
 exports.returnCreated = catchAsync(async (req, res, next) => {
   const currentMonthYear = moment().format("MM-YYYY");

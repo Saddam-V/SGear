@@ -12,18 +12,14 @@ const TotalStock = require("../models/totalStockModel");
 // Controller for getting all transactions
 exports.getAllTransactions = factory.getAll(Transaction);
 
-exports.createStock = catchAsync(async (req, res, next) => {
-  if (typeof req === "string") {
-    req = JSON.parse(req);
-  }
-  const { custName, catNum, colNum, meter, reason, transactionType, rate } = req;
-
-  // Extract rate from color entry
+// Assume createStock now accepts an order object directly
+exports.createStock = async (order) => {
+  const { custName, catNum, colNum, meter, reason, transactionType, rate } = order;
 
   // Calculate total cost
   const totalCost = meter * rate;
 
-  const totalStock = await TotalStock.findOne({ catNum: req.catNum, colNum: req.colNum });
+  const totalStock = await TotalStock.findOne({ catNum: catNum, colNum: colNum });
 
   let remainingStock = totalStock.meter;
 
@@ -41,4 +37,4 @@ exports.createStock = catchAsync(async (req, res, next) => {
     startDates: moment().format("YYYY-MM-DD-HH:mm:ss"),
     // Add other fields from req.body as needed
   });
-});
+};
