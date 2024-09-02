@@ -197,35 +197,41 @@ exports.createBill = catchAsync(async (req, res, next) => {
 });
 
 exports.billPaid = catchAsync(async (req, res, next) => {
-  const { billNum } = req.body; // Get required data from request body
+  const { paymentAmount } = req.body; // Get required data from request body
+  const billNum = req.body.id;
 
-  console.log("1");
-  if (!billNum) {
-    return next(new AppError("Bill Number is Missing", 500)); // Validate input data (optional)
+  if (!billNum || paymentAmount === undefined) {
+    return next(new AppError("Bill Number and Payment Amount are required", 400)); // Validate input data
   }
-  console.log("2");
 
-  const bill = await Bill.findById(billNum); // Find the bill to update
-  if (bill.billPaid) {
-    return next(new AppError("This bill is already paid", 500));
-  }
-  console.log("3");
+  const bill = await Bill.findById(billNum); // Find the bill by ID
 
   if (!bill) {
     return next(new AppError("Bill Not Found", 404)); // Check if bill exists
   }
-  console.log("4");
 
-  if (bill.price) {
-    bill.billPaid = true; // Update if the bill already has a price
-  } else {
-    return next(new AppError("Price not found for bill. Update failed", 404));
+  if (bill.billPaid) {
+    return next(new AppError("This bill is already paid", 400)); // Check if bill is already paid
   }
-  console.log("5");
+
+  // Parse the amounts as floats to handle currency correctly
+  const totalAmountDue = parseFloat(bill.price);
+  const currentAmountPaid = parseFloat(bill.amount_paid);
+  const paymentAmountFloat = parseFloat(paymentAmount);
+
+  if (currentAmountPaid + paymentAmountFloat > totalAmountDue) {
+    return next(new AppError("Payment exceeds the total amount due. Update failed", 400)); // Prevent overpayment
+  }
+
+  bill.amount_paid = currentAmountPaid + paymentAmountFloat; // Update the total amount paid
+
+  if (bill.amount_paid >= totalAmountDue) {
+    bill.billPaid = true; // Mark the bill as paid if the amount paid meets or exceeds the total amount due
+    bill.discountUpdated = true; // Mark the bill as paid if the amount paid meets or exceeds the total amount due
+  }
 
   await bill.save(); // Save updated bill
 
-  console.log("6");
   res.status(200).json({
     data: bill, // Return updated bill data
   });

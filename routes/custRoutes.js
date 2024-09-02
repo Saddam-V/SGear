@@ -14,6 +14,9 @@ router
 router
   .route("/custDetails/:id")
   .get(authController.protect, authController.restrictTo("admin"), custController.getCustDetails);
+router
+  .route("/custMonthlyDetails/:id")
+  .get(authController.protect, authController.restrictTo("admin"), custController.getMonthlyCustDetails);
 
 // router.route("/validate").post();
 
