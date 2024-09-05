@@ -22,7 +22,7 @@ exports.createCat = catchAsync(async (req, res, next) => {
 exports.addOrderToCatalogue = catchAsync(async (req, res, next) => {
   const catalogueId = req.body.id;
   console.log(catalogueId + " is here");
-  const { colNum, rate, confirmUpdate } = req.body;
+  const { colNum, rate, buyingRate, confirmUpdate } = req.body;
 
   const catalogue = await Catalogue.findById(catalogueId);
   if (!catalogue) return next(new AppError("Catalogue not found", 404));
@@ -48,8 +48,14 @@ exports.addOrderToCatalogue = catchAsync(async (req, res, next) => {
     }
   }
 
+  if (!colNum || !rate || !buyingRate) {
+    return next(new AppError("Compulsory fields missing"));
+  }
+
+  console.log(buyingRate);
   // Add new order if colNum does not exist
-  catalogue.orders.push({ colNum, rate });
+  catalogue.orders.push({ colNum, rate, buyingRate });
+  console.log(catalogue.orders);
   await catalogue.save();
 
   res.status(200).json({
@@ -97,20 +103,32 @@ exports.deleteCat = factory.deleteOne(Catalogue);
 
 // Function to Update rate
 exports.updateCatOrders = catchAsync(async (req, res, next) => {
-  const { catNum, colNum, updatedRate } = req.body;
+  const { catNum, colNum, updatedRate, updatedBuyingRate } = req.body;
   // Find the Cat document based on catNum
   const catToUpdate = await Catalogue.findOne({ catNum });
 
   console.log(catToUpdate);
   if (catToUpdate) {
-    // Update rate for all orders if colNum is not provided
+    // Update rate and buyingRate for all orders if colNum is not provided
     if (!colNum) {
-      catToUpdate.orders.forEach((order) => (order.rate = updatedRate));
+      catToUpdate.orders.forEach((order) => {
+        if (updatedRate !== undefined) {
+          order.rate = updatedRate;
+        }
+        if (updatedBuyingRate !== undefined) {
+          order.buyingRate = updatedBuyingRate;
+        }
+      });
     } else {
-      // Update rate for specific colNum if provided
+      // Update rate and buyingRate for a specific colNum if provided
       const orderIndex = catToUpdate.orders.findIndex((order) => order.colNum === colNum);
       if (orderIndex !== -1) {
-        catToUpdate.orders[orderIndex].rate = updatedRate;
+        if (updatedRate !== undefined) {
+          catToUpdate.orders[orderIndex].rate = updatedRate;
+        }
+        if (updatedBuyingRate !== undefined) {
+          catToUpdate.orders[orderIndex].buyingRate = updatedBuyingRate;
+        }
       } else {
         throw "Column number not found for this catNum";
       }

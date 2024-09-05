@@ -6,6 +6,7 @@ const TotalStock = require("../models/totalStockModel");
 const StockTransction = require("../models/stockTransactionsModel");
 const APIFeatures = require("../utils/apiFeatures");
 const totalStockController = require("../controllers/totalStockController");
+const catController = require("../controllers/catController");
 const stockTransaction = require("../controllers/stockTransactionController");
 const Catalogue = require("../models/catModel");
 const moment = require("moment");
@@ -37,6 +38,7 @@ exports.createStock = catchAsync(async (req, res, next) => {
   }
 
   req.body.rate = colorEntry.rate;
+  req.body.buyingRate = colorEntry.buyingRate;
 
   req.body.startDates = moment().format("YYYY-MM-DD-HH:mm:ss");
   await totalStockController.updateStock(req, res);

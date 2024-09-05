@@ -55,6 +55,10 @@ const billSchema = new mongoose.Schema({
     type: Number,
     default: 0, // Initial value is 0
   },
+  amount_left: {
+    type: Number,
+    default: 0, // Initial value is 0
+  },
 });
 
 const Bill = mongoose.model("Bill", billSchema);

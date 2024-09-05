@@ -42,6 +42,7 @@ exports.getunupdatedDiscount = catchAsync(async (req, res, next) => {
 
 exports.getinsight = catchAsync(async (req, res, next) => {
   let startDate, endDate;
+  console.log(req.params);
   // // Check if start and end dates are provided in the request parameters
   if (req.params.start && req.params.end) {
     startDate = new Date(req.params.start);
@@ -60,6 +61,8 @@ exports.getinsight = catchAsync(async (req, res, next) => {
   const formattedEndDate = formatDate(endDate);
 
   // Query bills with startDates falling within the specified range
+  console.log(formattedStartDate);
+  console.log(formattedEndDate);
   bills = await Bill.find({
     startDates: {
       $gte: formattedStartDate,
@@ -72,6 +75,8 @@ exports.getinsight = catchAsync(async (req, res, next) => {
     data: {
       bills,
     },
+    startDate: formattedStartDate,
+    endDate: formattedEndDate,
   });
 });
 
@@ -224,6 +229,7 @@ exports.billPaid = catchAsync(async (req, res, next) => {
   }
 
   bill.amount_paid = currentAmountPaid + paymentAmountFloat; // Update the total amount paid
+  bill.amount_left = totalAmountDue - bill.amount_paid;
 
   if (bill.amount_paid >= totalAmountDue) {
     bill.billPaid = true; // Mark the bill as paid if the amount paid meets or exceeds the total amount due

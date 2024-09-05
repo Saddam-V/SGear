@@ -4,6 +4,7 @@ const moment = require("moment");
 const orderSchema = new mongoose.Schema({
   colNum: { type: String, trim: true, required: [true, "Order must have a Column Number"] },
   rate: { type: Number, trim: true, required: [true, "Order must have a Rate"] },
+  buyingRate: { type: Number, trim: true },
 });
 
 const catalogueSchema = new mongoose.Schema({

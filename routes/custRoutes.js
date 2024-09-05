@@ -18,7 +18,7 @@ router
   .route("/custMonthlyDetails/:id")
   .get(authController.protect, authController.restrictTo("admin"), custController.getMonthlyCustDetails);
 
-// router.route("/validate").post();
+router.route("/getCustNum/:custName").get(authController.protect, custController.getCustNum);
 
 // router.route("/:id").get(custController.getCat).patch(custController.updateCat).delete(custController.deleteCat);
 

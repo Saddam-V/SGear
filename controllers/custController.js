@@ -102,20 +102,20 @@ exports.getCustDetails = catchAsync(async (req, res, next) => {
     res.json({
       customerId,
       customerName, // Include customer name in the response
-      totalBills,
-      currentMonthBills,
       totalSum,
       totalDiscount,
-      currentMonthDiscount,
       currentMonthSum,
-      unpaidBills,
+      currentMonthDiscount,
       unpaidSum,
-      paidBills,
-      paidSum,
       currentMonthUnpaidSum,
-      currentMonthUnpaid,
-      currentMonthPaidBills,
+      paidSum,
       currentMonthPaidSum,
+      totalBills,
+      currentMonthBills,
+      unpaidBills,
+      currentMonthUnpaid,
+      paidBills,
+      currentMonthPaidBills,
     });
   } catch (error) {
     console.error("Error fetching customer details:", error);
@@ -398,20 +398,20 @@ exports.getAllCust = catchAsync(async (req, res, next) => {
     status: "success",
     results: custs.length,
     data: {
-      custs,
       totalSum,
       unpaidTotalSum,
-      unpaidTotalBills,
-      paidTotalBills,
       paidTotalSum,
       totalDiscount,
       currentMonthTotalSum,
-      currentMonthTotalBills,
-      currentMonthTotalUnpaidBills,
       currentMonthTotalUnpaidSum,
       currentMonthTotalDiscount,
-      currentMonthTotalPaidBills,
       currentMonthTotalPaidSum,
+      currentMonthTotalPaidBills,
+      currentMonthTotalUnpaidBills,
+      currentMonthTotalBills,
+      paidTotalBills,
+      unpaidTotalBills,
+      custs,
     },
   });
 });
@@ -431,4 +431,21 @@ exports.getCustSearch = catchAsync(async (req, res, next) => {
       custs,
     },
   });
+});
+
+exports.getCustNum = catchAsync(async (req, res, next) => {
+  const { custName } = req.params;
+
+  try {
+    const customer = await Cust.findOne({ custName });
+
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    res.status(200).json({ custNum: customer.custNum });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
