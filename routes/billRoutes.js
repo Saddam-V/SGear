@@ -14,10 +14,8 @@ router.route("/search/:cat").get(authController.protect, billController.getBillS
 router
   .route("/insight/:start?/:end?")
   .get(authController.protect, authController.restrictTo("admin"), billController.getinsight);
-router.route("/unpaid").get(authController.protect, authController.restrictTo("admin"), billController.getunpaid);
-router
-  .route("/unupdatedDiscount")
-  .get(authController.protect, authController.restrictTo("admin"), billController.getunupdatedDiscount);
+router.route("/unpaid").get(authController.protect, billController.getunpaid);
+router.route("/unupdatedDiscount").get(authController.protect, billController.getunupdatedDiscount);
 
 router.route("/validate").post(authController.protect, billController.validateData);
 router

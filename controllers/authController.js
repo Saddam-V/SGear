@@ -30,12 +30,7 @@ const createSendToken = (user, statusCode, res) => {
     status: "success",
     token, // Send the JWT as part of the JSON response
     data: {
-      user: {
-        // Assuming you want to send some user data as well
-        id: user._id,
-        name: user.name, // Add other relevant user info
-        email: user.email,
-      },
+      user,
     },
   });
 

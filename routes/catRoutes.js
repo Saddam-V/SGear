@@ -7,7 +7,7 @@ const router = express.Router();
 router
   .route("/")
   .get(authController.protect, authController.restrictTo("admin"), catController.getAllCat)
-  .post(authController.protect, catController.createCat);
+  .post(authController.protect, authController.restrictTo("admin"), catController.createCat);
 
 router.post(
   "/updateCatOrders",
@@ -24,7 +24,7 @@ router.post(
 );
 
 router
-  .post("/addOrder", catController.addOrderToCatalogue)
+  .post("/addOrder", authController.restrictTo("admin"), catController.addOrderToCatalogue)
   .put("/addOrder", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue);
 // router.route("/validate").post();
 

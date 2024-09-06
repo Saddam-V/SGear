@@ -6,7 +6,7 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(authController.protect, totalStockController.getAllStock)
+  .get(authController.protect, authController.restrictTo("admin"), totalStockController.getAllStock)
   .post(authController.protect, totalStockController.createStock);
 router.route("/search/:cat/:col?").get(authController.protect, totalStockController.getTotalStockSearch);
 
