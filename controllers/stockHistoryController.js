@@ -41,8 +41,8 @@ exports.createStock = catchAsync(async (req, res, next) => {
   req.body.buyingRate = colorEntry.buyingRate;
 
   req.body.startDates = moment().format("YYYY-MM-DD-HH:mm:ss");
-  await totalStockController.updateStock(req, res);
   const newStock = await StockHistory.create(req.body);
+  await totalStockController.updateStock(req, res);
   res.status(200).json({
     status: "success",
     data: {

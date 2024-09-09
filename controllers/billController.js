@@ -267,9 +267,16 @@ exports.updateDiscount = catchAsync(async (req, res, next) => {
 
   // Update price if the bill already has a price
   if (bill.price) {
-    bill.price = (parseFloat(bill.price) - parseFloat(priceDiscount)).toString();
+    const newPrice = parseFloat(bill.price) - parseFloat(priceDiscount);
+    bill.price = newPrice.toString();
     bill.priceDiscount = parseFloat(priceDiscount) + parseFloat(bill.priceDiscount); // Update discount only if price is updated
     bill.discountUpdated = true;
+
+    // Check if amount_paid + amount_left > new price, and update amount_left if necessary
+    const totalAmount = bill.amount_paid + bill.amount_left;
+    if (totalAmount > newPrice) {
+      bill.amount_left = newPrice - bill.amount_paid;
+    }
   } else {
     return next(new AppError("Bill price not found. Price and discount cannot be updated.", 404));
   }

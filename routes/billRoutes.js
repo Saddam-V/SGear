@@ -18,10 +18,8 @@ router.route("/unpaid").get(authController.protect, billController.getunpaid);
 router.route("/unupdatedDiscount").get(authController.protect, billController.getunupdatedDiscount);
 
 router.route("/validate").post(authController.protect, billController.validateData);
-router
-  .route("/updateDiscount")
-  .post(authController.protect, authController.restrictTo("admin"), billController.updateDiscount);
-router.route("/billPaid").post(authController.protect, authController.restrictTo("admin"), billController.billPaid);
+router.route("/updateDiscount").post(authController.protect, billController.updateDiscount);
+router.route("/billPaid").post(authController.protect, billController.billPaid);
 router.route("/getNumber/:custName/:custNum?").post(authController.protect, billController.getNumber);
 router.route("/findRate").post(authController.protect, billController.findRate);
 

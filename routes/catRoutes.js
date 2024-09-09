@@ -24,10 +24,14 @@ router.post(
 );
 
 router
-  .post("/addOrder", authController.restrictTo("admin"), catController.addOrderToCatalogue)
+  .post("/addOrder", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue)
   .put("/addOrder", authController.protect, authController.restrictTo("admin"), catController.addOrderToCatalogue);
 // router.route("/validate").post();
 
-router.route("/:id").get(catController.getCat).patch(catController.updateCat).delete(catController.deleteCat);
+router
+  .route("/:id")
+  .get(authController.protect, authController.restrictTo("admin"), catController.getSingleCat)
+  .patch(catController.updateCat)
+  .delete(catController.deleteCat);
 
 module.exports = router;

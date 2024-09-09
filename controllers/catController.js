@@ -3,6 +3,7 @@ const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const factory = require("./handlerFactory");
 const Catalogue = require("../models/catModel");
+const TotalStock = require("../models/totalStockModel");
 var fs = require("fs");
 const moment = require("moment");
 const { nextTick } = require("process");
@@ -92,6 +93,81 @@ exports.deleteOrderFromCatalogue = catchAsync(async (req, res, next) => {
     message: "Order deleted successfully",
     data: {
       catalogue,
+    },
+  });
+});
+
+exports.getSingleCat = catchAsync(async (req, res, next) => {
+  // Fetch the catalogue by its ID from params
+  const catalogue = await Catalogue.findById(req.params.id);
+
+  // If the catalogue is not found, return an error
+  if (!catalogue) {
+    return next(new AppError("No catalogue found with that ID", 404));
+  }
+
+  // Fetch corresponding TotalStock data for the catNum of the catalogue
+  const totalStocks = await TotalStock.find({ catNum: String(catalogue.catNum) });
+
+  // Initialize monthly data
+  const monthlyData = {
+    monthlyStockValue: {},
+    monthlyMeterAdded: {},
+    monthlySold: {},
+    monthlySoldValue: {},
+  };
+
+  // Function to convert a Map to a plain object (handling null/undefined maps)
+  const mapToObject = (map) => {
+    const obj = {};
+    if (map && typeof map.forEach === "function") {
+      map.forEach((value, key) => {
+        obj[key] = value;
+      });
+    }
+    return obj;
+  };
+
+  // Aggregate data by month
+  totalStocks.forEach((stock) => {
+    // Convert Maps to plain objects (handle undefined fields gracefully)
+    const stockValue = mapToObject(stock.monthlyStockValue || new Map());
+    const meterAdded = mapToObject(stock.monthlyMeterAdded || new Map());
+    const sold = mapToObject(stock.monthlySold || new Map());
+    const soldValue = mapToObject(stock.monthlySoldValue || new Map());
+
+    // Iterate over the months in stockValue (assuming other maps follow the same structure)
+    Object.keys(stockValue).forEach((month) => {
+      if (!monthlyData.monthlyStockValue[month]) {
+        monthlyData.monthlyStockValue[month] = 0;
+        monthlyData.monthlyMeterAdded[month] = 0;
+        monthlyData.monthlySold[month] = 0;
+        monthlyData.monthlySoldValue[month] = 0;
+      }
+
+      monthlyData.monthlyStockValue[month] += stockValue[month] || 0;
+      monthlyData.monthlyMeterAdded[month] += meterAdded[month] || 0;
+      monthlyData.monthlySold[month] += sold[month] || 0;
+      monthlyData.monthlySoldValue[month] += soldValue[month] || 0;
+    });
+  });
+
+  // Convert monthly data to arrays of objects
+  const monthlyDataArray = Object.keys(monthlyData.monthlyStockValue).map((month) => ({
+    month,
+    totalStockValue: monthlyData.monthlyStockValue[month],
+    totalMeterAdded: monthlyData.monthlyMeterAdded[month],
+    totalSold: monthlyData.monthlySold[month],
+    totalSoldValue: monthlyData.monthlySoldValue[month],
+  }));
+
+  // Send the response
+  res.status(200).json({
+    status: "success",
+    data: {
+      catNum: catalogue.catNum,
+      catName: catalogue.catName,
+      monthlyData: monthlyDataArray,
     },
   });
 });
