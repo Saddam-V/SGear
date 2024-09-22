@@ -105,9 +105,12 @@ exports.findRate = catchAsync(async (req, res, next) => {
     for (let i = 0; i < arr.length; i++) {
       if (arr[i].colNum === req.body.colNum) {
         const rate = arr[i].rate;
-        res.send(rate.toString());
+        return res.send(rate.toString()); // Return response immediately on match
       }
     }
+
+    // If no match is found, send an appropriate response
+    return res.status(404).send("No rate found for the specified colNum");
   }
 });
 
@@ -135,32 +138,35 @@ exports.getNumber = catchAsync(async (req, res, next) => {
 // };
 
 exports.createBill = catchAsync(async (req, res, next) => {
-  const data = req.body.orders;
-  let customerName = req.body.customerName.toUpperCase(); // Convert to uppercase
-  let customerNumber = req.body.customerNumber.toUpperCase(); // Convert to uppercase
-  const discount = req.body.discount;
-  const totalPrice = req.body.totalPrice;
+  const data = req.body.orders.map((order) => ({
+    ...order,
+    rate: Math.round(order.rate * 100) / 100, // Rounding rate to 2 decimal points
+    meter: Math.round(order.meter * 100) / 100, // Rounding meter to 2 decimal points
+    price: Math.round(order.price * 100) / 100, // Rounding meter to 2 decimal points
+  }));
+
+  let customerName = req.body.customerName.toUpperCase();
+  let customerNumber = req.body.customerNumber.toUpperCase();
+  const discount = Math.round(req.body.discount * 100) / 100; // Rounding discount
+  const totalPrice = Math.round(req.body.totalPrice * 100) / 100; // Rounding totalPrice
   const billNo = await getBillNum();
 
-  // console.log(billNo);
   const existingBill = await Bill.findOne({ billNum: billNo });
   if (existingBill) {
-    return next(new AppError("Bill Already Exists", 500)); // Bill already exists, return error
+    return next(new AppError("Bill Already Exists", 500));
   }
 
-  // Find or create the customer to get the customerId
   let customer = await Cust.findOne({ custName: customerName, custNum: customerNumber });
   let customerId;
   if (!customer) {
-    // If customer doesn't exist, create a new customer
     const newCustomer = new Cust({
       custName: customerName,
       custNum: customerNumber,
     });
     customer = await newCustomer.save();
-    customerId = customer._id; // Get the new customerId
+    customerId = customer._id;
   } else {
-    customerId = customer._id; // Use existing customerId
+    customerId = customer._id;
   }
 
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
@@ -173,24 +179,22 @@ exports.createBill = catchAsync(async (req, res, next) => {
     price: totalPrice,
     priceDiscount: discount,
     startDates: currentDateTime,
-    customerId: customerId, // Add customerId to the bill
+    customerId: customerId,
   };
 
   await Bill.create(myobj);
 
-  // Process all orders and ensure that billCreated does not encounter any errors
   for (let order of data) {
     const modifiedOrder = { ...order, custName: customerName };
 
     try {
-      await totalStockController.billCreated(order.catNum, order.colNum, order.meter, order.rate); // Adjusted parameters
-      await stockTransactionController.createStock(modifiedOrder); // Passing modified order directly
+      await totalStockController.billCreated(order.catNum, order.colNum, order.meter, order.rate);
+      await stockTransactionController.createStock(modifiedOrder);
     } catch (error) {
-      return next(error); // Stop processing further if an error is encountered
+      return next(error);
     }
   }
 
-  // Update customer orders if it already exists
   if (customer) {
     await customer.orders.push(...data);
     await Cust.updateOne({ _id: customerId }, customer);

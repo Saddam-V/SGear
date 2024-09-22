@@ -49,7 +49,6 @@ exports.createStock = catchAsync(async (req, res, next) => {
       stock: newStock,
     },
   });
-  await stockTransaction.createStock(req.body, res);
 });
 
 exports.getAllStock = catchAsync(async (req, res, next) => {

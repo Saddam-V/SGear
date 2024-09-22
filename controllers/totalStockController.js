@@ -4,6 +4,7 @@ const factory = require("./handlerFactory");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const moment = require("moment"); // Use moment.js to handle date formatting
+const stockTransaction = require("../controllers/stockTransactionController");
 
 exports.createStock = factory.createOne(TotalStock);
 exports.getAllStock = factory.getAll(TotalStock);
@@ -38,21 +39,18 @@ exports.billCreated = async (catNum, colNum, meter, rate) => {
   if (doc === null || parseFloat(doc.meter) - parseFloat(meter) < 0) {
     throw new AppError("Catalogue not found or insufficient stock", 404);
   } else {
-    const meterToReduce = parseFloat(meter);
-    const soldValue = meterToReduce * parseFloat(rate);
+    const meterToReduce = Math.round(parseFloat(meter) * 100) / 100; // Rounding meter to 2 decimal points
+    const soldValue = Math.round(meterToReduce * parseFloat(rate) * 100) / 100; // Rounding sold value to 2 decimal points
 
-    // Update meter and total sold
     doc.meter -= meterToReduce;
     doc.totalSold += meterToReduce;
 
-    // Update monthly sold meter
     if (doc.monthlySold.has(currentMonthYear)) {
       doc.monthlySold.set(currentMonthYear, doc.monthlySold.get(currentMonthYear) + meterToReduce);
     } else {
       doc.monthlySold.set(currentMonthYear, meterToReduce);
     }
 
-    // Update monthly sold value
     if (doc.monthlySoldValue.has(currentMonthYear)) {
       doc.monthlySoldValue.set(currentMonthYear, doc.monthlySoldValue.get(currentMonthYear) + soldValue);
     } else {
@@ -150,6 +148,8 @@ exports.updateStock = catchAsync(async (req, res, next) => {
         new: true,
         runValidators: true,
       });
+
+      await stockTransaction.createStock(req.body, res);
     }
   });
 });
