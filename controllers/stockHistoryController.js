@@ -17,7 +17,6 @@ exports.reduceStock = catchAsync(async (req, res, next) => {
   req.body.rate = 0;
   req.body.transactionType = "DeleteStock";
   req.body.custName = req.body.reason;
-  await stockTransaction.createStock(req.body, res);
 
   res.status(200).json({
     status: "success", // Send back the updated cat document

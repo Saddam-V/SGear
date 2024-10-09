@@ -15,7 +15,7 @@ exports.getAllTransactions = factory.getAll(Transaction);
 // Assume createStock now accepts an order object directly
 exports.createStock = async (order) => {
   const { custName, catNum, colNum, meter, reason, transactionType, rate } = order;
-
+  console.log(order);
   // Calculate total cost
   const totalCost = meter * rate;
 

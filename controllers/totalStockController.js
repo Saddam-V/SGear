@@ -97,6 +97,8 @@ exports.returnCreated = catchAsync(async (req, res, next) => {
       runValidators: true,
     });
 
+    await stockTransaction.createStock(req);
+
     // res.status(200).json({
     //   status: "success",
     //   data: doc,
@@ -196,6 +198,7 @@ exports.reduceStock = catchAsync(async (req, res, next) => {
     //   status: "success",
     //   data: doc,
     // });
+    await stockTransaction.createStock(req.body, res);
   } else {
     return next(new AppError("Catalogue not found", 404));
   }
