@@ -239,6 +239,8 @@ exports.totalInsight = catchAsync(async (req, res, next) => {
   const twoMonthsAgoYear = moment().subtract(2, "months").format("MM-YYYY");
   const threeMonthsAgoYear = moment().subtract(3, "months").format("MM-YYYY");
   const fourMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
+  const fiveMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
+  const sixMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
 
   // Fetch all documents to perform calculations
   const allStocks = await TotalStock.find();
@@ -257,6 +259,8 @@ exports.totalInsight = catchAsync(async (req, res, next) => {
   let profitTwoMonthsAgo = 0;
   let profitThreeMonthsAgo = 0;
   let profitFourMonthsAgo = 0;
+  let profitFiveMonthsAgo = 0;
+  let profitSixMonthsAgo = 0;
   let mostAddedClothes = [];
   let mostAddedClothesThisMonth = [];
   let mostSoldClothes = [];
@@ -306,11 +310,17 @@ exports.totalInsight = catchAsync(async (req, res, next) => {
       (stock.monthlySoldValue.get(threeMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(threeMonthsAgoYear) || 0);
     const profitFourAgo =
       (stock.monthlySoldValue.get(fourMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(fourMonthsAgoYear) || 0);
+    const profitFiveAgo =
+      (stock.monthlySoldValue.get(fiveMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(fiveMonthsAgoYear) || 0);
+    const profitSixAgo =
+      (stock.monthlySoldValue.get(sixMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(sixMonthsAgoYear) || 0);
     profitThisMonth += profitCurrent;
     profitLastMonth += profitPrevious;
     profitTwoMonthsAgo += profitTwoAgo;
     profitThreeMonthsAgo += profitThreeAgo;
     profitFourMonthsAgo += profitFourAgo;
+    profitFiveMonthsAgo += profitFiveAgo;
+    profitSixMonthsAgo += profitSixAgo;
 
     // Calculate overall profit for the item across all months
     const overallProfit = [...stock.monthlySoldValue.entries()].reduce((total, [monthYear, soldValue]) => {
@@ -343,14 +353,14 @@ exports.totalInsight = catchAsync(async (req, res, next) => {
   });
 
   // Sort metrics and get top 5
-  const topAdded = addedMetrics.sort((a, b) => b.totalAdded - a.totalAdded).slice(0, 5);
-  const topAddedThisMonth = addedThisMonthMetrics.sort((a, b) => b.addedThisMonth - a.addedThisMonth).slice(0, 5);
-  const topSold = soldMetrics.sort((a, b) => b.totalSold - a.totalSold).slice(0, 5);
-  const topSoldThisMonth = soldThisMonthMetrics.sort((a, b) => b.soldThisMonth - a.soldThisMonth).slice(0, 5);
-  const leastSold = soldMetrics.sort((a, b) => a.totalSold - b.totalSold).slice(0, 5);
-  const leastSoldThisMonth = soldThisMonthMetrics.sort((a, b) => a.soldThisMonth - b.soldThisMonth).slice(0, 5);
-  const topProfitable = profitableMetrics.sort((a, b) => b.profitCurrent - a.profitCurrent).slice(0, 5);
-  const topOverallProfitable = overallProfitableMetrics.sort((a, b) => b.overallProfit - a.overallProfit).slice(0, 5);
+  const topAdded = addedMetrics.sort((a, b) => b.totalAdded - a.totalAdded).slice(0, 10);
+  const topAddedThisMonth = addedThisMonthMetrics.sort((a, b) => b.addedThisMonth - a.addedThisMonth).slice(0, 10);
+  const topSold = soldMetrics.sort((a, b) => b.totalSold - a.totalSold).slice(0, 10);
+  const topSoldThisMonth = soldThisMonthMetrics.sort((a, b) => b.soldThisMonth - a.soldThisMonth).slice(0, 10);
+  const leastSold = soldMetrics.sort((a, b) => a.totalSold - b.totalSold).slice(0, 10);
+  const leastSoldThisMonth = soldThisMonthMetrics.sort((a, b) => a.soldThisMonth - b.soldThisMonth).slice(0, 10);
+  const topProfitable = profitableMetrics.sort((a, b) => b.profitCurrent - a.profitCurrent).slice(0, 10);
+  const topOverallProfitable = overallProfitableMetrics.sort((a, b) => b.overallProfit - a.overallProfit).slice(0, 10);
   // Sort the array by profit and get the top 5 items
 
   res.status(200).json({
@@ -369,6 +379,8 @@ exports.totalInsight = catchAsync(async (req, res, next) => {
       profitTwoMonthsAgo,
       profitThreeMonthsAgo,
       profitFourMonthsAgo,
+      profitFiveMonthsAgo,
+      profitSixMonthsAgo,
       mostAddedClothes: topAdded,
       mostAddedClothesThisMonth: topAddedThisMonth,
       mostSoldClothes: topSold,
