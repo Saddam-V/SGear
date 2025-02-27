@@ -17,7 +17,7 @@ exports.createCat = catchAsync(async (req, res, next) => {
   const newCatalogue = new Catalogue({ catNum: req.body.catNum, catName: req.body.catName, orders: [] });
   const savedCatalogue = await newCatalogue.save();
   if (!savedCatalogue) return next(new AppError("Error Saving Catalogue Entry", 500));
-  res.redirect(`/api/v1/Catalogue/${savedCatalogue._id}`);
+  res.redirect(`/api/v1/catalogue/${savedCatalogue._id}`);
 });
 
 exports.addOrderToCatalogue = catchAsync(async (req, res, next) => {
