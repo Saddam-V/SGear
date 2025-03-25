@@ -1,4 +1,6 @@
 const TotalStock = require("../models/totalStockModel");
+const Expense = require("../models/expenseModel");
+const MonthlyDiscount = require("../models/discountModel");
 const APIFeatures = require("../utils/apiFeatures");
 const factory = require("./handlerFactory");
 const catchAsync = require("../utils/catchAsync");
@@ -233,162 +235,379 @@ exports.getTotalStockSearch = catchAsync(async (req, res, next) => {
   });
 });
 
+// exports.totalInsight = catchAsync(async (req, res, next) => {
+//   const currentMonthYear = moment().format("MM-YYYY");
+//   const lastMonthYear = moment().subtract(1, "months").format("MM-YYYY");
+//   const twoMonthsAgoYear = moment().subtract(2, "months").format("MM-YYYY");
+//   const threeMonthsAgoYear = moment().subtract(3, "months").format("MM-YYYY");
+//   const fourMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
+//   const fiveMonthsAgoYear = moment().subtract(5, "months").format("MM-YYYY");
+//   const sixMonthsAgoYear = moment().subtract(6, "months").format("MM-YYYY");
+
+//   // Fetch all documents to perform calculations
+//   const allStocks = await TotalStock.find();
+
+//   // Initialize the variables for insights
+//   let totalMeterAdded = 0;
+//   let totalMeterAddedThisMonth = 0;
+//   let totalValueStockAdded = 0;
+//   let totalValueStockAddedThisMonth = 0;
+//   let totalMeterSold = 0;
+//   let totalMeterSoldThisMonth = 0;
+//   let totalValueSold = 0;
+//   let totalValueSoldThisMonth = 0;
+//   let profitThisMonth = 0;
+//   let profitLastMonth = 0;
+//   let profitTwoMonthsAgo = 0;
+//   let profitThreeMonthsAgo = 0;
+//   let profitFourMonthsAgo = 0;
+//   let profitFiveMonthsAgo = 0;
+//   let profitSixMonthsAgo = 0;
+//   let mostAddedClothes = [];
+//   let mostAddedClothesThisMonth = [];
+//   let mostSoldClothes = [];
+//   let mostSoldClothesThisMonth = [];
+//   let leastSoldClothes = [];
+//   let leastSoldClothesThisMonth = [];
+//   let mostProfitableClothes = [];
+//   let mostProfitableClothesThisMonth = [];
+//   let maxProfit = 0;
+
+//   // Temporary variables to find most and least values
+//   const addedMetrics = [];
+//   const addedThisMonthMetrics = [];
+//   const soldMetrics = [];
+//   const soldThisMonthMetrics = [];
+//   const profitableMetrics = [];
+//   const overallProfitableMetrics = [];
+
+//   allStocks.forEach((stock) => {
+//     // Calculate total meter added and total value of stock added
+//     totalMeterAdded += [...stock.monthlyMeterAdded.values()].reduce((a, b) => a + b, 0);
+//     totalValueStockAdded += [...stock.monthlyStockValue.values()].reduce((a, b) => a + b, 0);
+
+//     // Calculate total meter added and total value of stock added this month
+//     const addedThisMonth = stock.monthlyMeterAdded.get(currentMonthYear) || 0;
+//     const valueAddedThisMonth = stock.monthlyStockValue.get(currentMonthYear) || 0;
+//     totalMeterAddedThisMonth += addedThisMonth;
+//     totalValueStockAddedThisMonth += valueAddedThisMonth;
+
+//     // Calculate total meter sold and total value sold
+//     totalMeterSold += [...stock.monthlySold.values()].reduce((a, b) => a + b, 0);
+//     totalValueSold += [...stock.monthlySoldValue.values()].reduce((a, b) => a + b, 0);
+
+//     // Calculate total meter sold and total value sold this month
+//     const soldThisMonth = stock.monthlySold.get(currentMonthYear) || 0;
+//     const valueSoldThisMonth = stock.monthlySoldValue.get(currentMonthYear) || 0;
+//     totalMeterSoldThisMonth += soldThisMonth;
+//     totalValueSoldThisMonth += valueSoldThisMonth;
+
+//     // Calculate profit for this month, last month, and two months ago
+//     const profitCurrent = valueSoldThisMonth - valueAddedThisMonth;
+//     const profitPrevious =
+//       (stock.monthlySoldValue.get(lastMonthYear) || 0) - (stock.monthlyStockValue.get(lastMonthYear) || 0);
+//     const profitTwoAgo =
+//       (stock.monthlySoldValue.get(twoMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(twoMonthsAgoYear) || 0);
+//     const profitThreeAgo =
+//       (stock.monthlySoldValue.get(threeMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(threeMonthsAgoYear) || 0);
+//     const profitFourAgo =
+//       (stock.monthlySoldValue.get(fourMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(fourMonthsAgoYear) || 0);
+//     const profitFiveAgo =
+//       (stock.monthlySoldValue.get(fiveMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(fiveMonthsAgoYear) || 0);
+//     const profitSixAgo =
+//       (stock.monthlySoldValue.get(sixMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(sixMonthsAgoYear) || 0);
+//     profitThisMonth += profitCurrent;
+//     profitLastMonth += profitPrevious;
+//     profitTwoMonthsAgo += profitTwoAgo;
+//     profitThreeMonthsAgo += profitThreeAgo;
+//     profitFourMonthsAgo += profitFourAgo;
+//     profitFiveMonthsAgo += profitFiveAgo;
+//     profitSixMonthsAgo += profitSixAgo;
+
+//     // Calculate overall profit for the item across all months
+//     const overallProfit = [...stock.monthlySoldValue.entries()].reduce((total, [monthYear, soldValue]) => {
+//       const stockValue = stock.monthlyStockValue.get(monthYear) || 0;
+//       return total + (soldValue - stockValue);
+//     }, 0);
+
+//     // Collect metrics for sorting
+//     addedMetrics.push({
+//       catNum: stock.catNum,
+//       colNum: stock.colNum,
+//       totalAdded: [...stock.monthlyMeterAdded.values()].reduce((a, b) => a + b, 0),
+//     });
+//     addedThisMonthMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, addedThisMonth });
+//     soldMetrics.push({
+//       catNum: stock.catNum,
+//       colNum: stock.colNum,
+//       totalSold: [...stock.monthlySold.values()].reduce((a, b) => a + b, 0),
+//     });
+//     soldThisMonthMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, soldThisMonth });
+//     profitableMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, profitCurrent });
+//     overallProfitableMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, overallProfit });
+
+//     // Determine most/least added/sold clothes
+
+//     if (profitCurrent > maxProfit) {
+//       maxProfit = profitCurrent;
+//       mostProfitableClothes = stock;
+//     }
+//   });
+
+//   // Sort metrics and get top 5
+//   const topAdded = addedMetrics.sort((a, b) => b.totalAdded - a.totalAdded).slice(0, 10);
+//   const topAddedThisMonth = addedThisMonthMetrics.sort((a, b) => b.addedThisMonth - a.addedThisMonth).slice(0, 10);
+//   const topSold = soldMetrics.sort((a, b) => b.totalSold - a.totalSold).slice(0, 10);
+//   const topSoldThisMonth = soldThisMonthMetrics.sort((a, b) => b.soldThisMonth - a.soldThisMonth).slice(0, 10);
+//   const leastSold = soldMetrics.sort((a, b) => a.totalSold - b.totalSold).slice(0, 10);
+//   const leastSoldThisMonth = soldThisMonthMetrics.sort((a, b) => a.soldThisMonth - b.soldThisMonth).slice(0, 10);
+//   const topProfitable = profitableMetrics.sort((a, b) => b.profitCurrent - a.profitCurrent).slice(0, 10);
+//   const topOverallProfitable = overallProfitableMetrics.sort((a, b) => b.overallProfit - a.overallProfit).slice(0, 10);
+//   // Sort the array by profit and get the top 5 items
+
+//   res.status(200).json({
+//     status: "success",
+//     insights: {
+//       totalMeterAdded,
+//       totalMeterAddedThisMonth,
+//       totalValueStockAdded,
+//       totalValueStockAddedThisMonth,
+//       totalMeterSold,
+//       totalMeterSoldThisMonth,
+//       totalValueSold,
+//       totalValueSoldThisMonth,
+//       profitThisMonth,
+//       profitLastMonth,
+//       profitTwoMonthsAgo,
+//       profitThreeMonthsAgo,
+//       profitFourMonthsAgo,
+//       profitFiveMonthsAgo,
+//       profitSixMonthsAgo,
+//       mostAddedClothes: topAdded,
+//       mostAddedClothesThisMonth: topAddedThisMonth,
+//       mostSoldClothes: topSold,
+//       mostSoldClothesThisMonth: topSoldThisMonth,
+//       leastSoldClothes: leastSold,
+//       leastSoldClothesThisMonth: leastSoldThisMonth,
+//       mostProfitableClothes: topProfitable,
+//       mostProfitableClothesOverall: topOverallProfitable,
+//     },
+//   });
+// });
+
 exports.totalInsight = catchAsync(async (req, res, next) => {
+  // Date calculations
   const currentMonthYear = moment().format("MM-YYYY");
   const lastMonthYear = moment().subtract(1, "months").format("MM-YYYY");
   const twoMonthsAgoYear = moment().subtract(2, "months").format("MM-YYYY");
   const threeMonthsAgoYear = moment().subtract(3, "months").format("MM-YYYY");
   const fourMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
-  const fiveMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
-  const sixMonthsAgoYear = moment().subtract(4, "months").format("MM-YYYY");
+  const fiveMonthsAgoYear = moment().subtract(5, "months").format("MM-YYYY");
+  const sixMonthsAgoYear = moment().subtract(6, "months").format("MM-YYYY");
 
-  // Fetch all documents to perform calculations
-  const allStocks = await TotalStock.find();
+  // Get all required data in parallel
+  const [allStocks, expenses, discounts] = await Promise.all([
+    TotalStock.find(),
+    Expense.find({
+      dateOFExpense: {
+        $in: [
+          currentMonthYear,
+          lastMonthYear,
+          twoMonthsAgoYear,
+          threeMonthsAgoYear,
+          fourMonthsAgoYear,
+          fiveMonthsAgoYear,
+          sixMonthsAgoYear,
+        ],
+      },
+    }),
+    MonthlyDiscount.find({
+      month: {
+        $in: [
+          currentMonthYear,
+          lastMonthYear,
+          twoMonthsAgoYear,
+          threeMonthsAgoYear,
+          fourMonthsAgoYear,
+          fiveMonthsAgoYear,
+          sixMonthsAgoYear,
+        ],
+      },
+    }),
+  ]);
 
-  // Initialize the variables for insights
-  let totalMeterAdded = 0;
-  let totalMeterAddedThisMonth = 0;
-  let totalValueStockAdded = 0;
-  let totalValueStockAddedThisMonth = 0;
-  let totalMeterSold = 0;
-  let totalMeterSoldThisMonth = 0;
-  let totalValueSold = 0;
-  let totalValueSoldThisMonth = 0;
-  let profitThisMonth = 0;
-  let profitLastMonth = 0;
-  let profitTwoMonthsAgo = 0;
-  let profitThreeMonthsAgo = 0;
-  let profitFourMonthsAgo = 0;
-  let profitFiveMonthsAgo = 0;
-  let profitSixMonthsAgo = 0;
-  let mostAddedClothes = [];
-  let mostAddedClothesThisMonth = [];
-  let mostSoldClothes = [];
-  let mostSoldClothesThisMonth = [];
-  let leastSoldClothes = [];
-  let leastSoldClothesThisMonth = [];
-  let mostProfitableClothes = [];
-  let mostProfitableClothesThisMonth = [];
-  let maxProfit = 0;
+  // Group expenses and discounts by month
+  const expensesByMonth = expenses.reduce((acc, expense) => {
+    acc[expense.dateOFExpense] = (acc[expense.dateOFExpense] || 0) + expense.amount;
+    return acc;
+  }, {});
 
-  // Temporary variables to find most and least values
-  const addedMetrics = [];
-  const addedThisMonthMetrics = [];
-  const soldMetrics = [];
-  const soldThisMonthMetrics = [];
-  const profitableMetrics = [];
-  const overallProfitableMetrics = [];
+  const discountsByMonth = discounts.reduce((acc, discount) => {
+    acc[discount.month] = discount.totalDiscount;
+    return acc;
+  }, {});
 
+  // Initialize variables
+  const insights = {
+    totalMeterAdded: 0,
+    totalMeterAddedThisMonth: 0,
+    totalValueStockAdded: 0,
+    totalValueStockAddedThisMonth: 0,
+    totalMeterSold: 0,
+    totalMeterSoldThisMonth: 0,
+    totalValueSold: 0,
+    totalValueSoldThisMonth: 0,
+    profitThisMonth: 0,
+    profitLastMonth: 0,
+    profitTwoMonthsAgo: 0,
+    profitThreeMonthsAgo: 0,
+    profitFourMonthsAgo: 0,
+    profitFiveMonthsAgo: 0,
+    profitSixMonthsAgo: 0,
+    mostAddedClothes: [],
+    mostAddedClothesThisMonth: [],
+    mostSoldClothes: [],
+    mostSoldClothesThisMonth: [],
+    leastSoldClothes: [],
+    leastSoldClothesThisMonth: [],
+    mostProfitableClothes: [],
+    mostProfitableClothesOverall: [],
+  };
+
+  const metrics = {
+    added: [],
+    addedThisMonth: [],
+    sold: [],
+    soldThisMonth: [],
+    profitable: [],
+    overallProfitable: [],
+  };
+
+  // Process each stock item
   allStocks.forEach((stock) => {
-    // Calculate total meter added and total value of stock added
-    totalMeterAdded += [...stock.monthlyMeterAdded.values()].reduce((a, b) => a + b, 0);
-    totalValueStockAdded += [...stock.monthlyStockValue.values()].reduce((a, b) => a + b, 0);
+    // Calculate metrics
+    const stockMetrics = {
+      totalAdded: [...stock.monthlyMeterAdded.values()].reduce((a, b) => a + b, 0),
+      addedThisMonth: stock.monthlyMeterAdded.get(currentMonthYear) || 0,
+      totalSold: [...stock.monthlySold.values()].reduce((a, b) => a + b, 0),
+      soldThisMonth: stock.monthlySold.get(currentMonthYear) || 0,
+      valueAddedThisMonth: stock.monthlyStockValue.get(currentMonthYear) || 0,
+      valueSoldThisMonth: stock.monthlySoldValue.get(currentMonthYear) || 0,
+    };
 
-    // Calculate total meter added and total value of stock added this month
-    const addedThisMonth = stock.monthlyMeterAdded.get(currentMonthYear) || 0;
-    const valueAddedThisMonth = stock.monthlyStockValue.get(currentMonthYear) || 0;
-    totalMeterAddedThisMonth += addedThisMonth;
-    totalValueStockAddedThisMonth += valueAddedThisMonth;
+    // Accumulate totals
+    insights.totalMeterAdded += stockMetrics.totalAdded;
+    insights.totalMeterAddedThisMonth += stockMetrics.addedThisMonth;
+    insights.totalValueStockAdded += [...stock.monthlyStockValue.values()].reduce((a, b) => a + b, 0);
+    insights.totalValueStockAddedThisMonth += stockMetrics.valueAddedThisMonth;
+    insights.totalMeterSold += stockMetrics.totalSold;
+    insights.totalMeterSoldThisMonth += stockMetrics.soldThisMonth;
+    insights.totalValueSold += [...stock.monthlySoldValue.values()].reduce((a, b) => a + b, 0);
+    insights.totalValueSoldThisMonth += stockMetrics.valueSoldThisMonth;
 
-    // Calculate total meter sold and total value sold
-    totalMeterSold += [...stock.monthlySold.values()].reduce((a, b) => a + b, 0);
-    totalValueSold += [...stock.monthlySoldValue.values()].reduce((a, b) => a + b, 0);
+    // Calculate monthly profits (before expenses/discounts)
+    const monthlyProfit = (month) => {
+      const sold = stock.monthlySoldValue.get(month) || 0;
+      const cost = stock.monthlyStockValue.get(month) || 0;
+      return sold - cost;
+    };
 
-    // Calculate total meter sold and total value sold this month
-    const soldThisMonth = stock.monthlySold.get(currentMonthYear) || 0;
-    const valueSoldThisMonth = stock.monthlySoldValue.get(currentMonthYear) || 0;
-    totalMeterSoldThisMonth += soldThisMonth;
-    totalValueSoldThisMonth += valueSoldThisMonth;
+    // Accumulate raw profits
+    insights.profitThisMonth += monthlyProfit(currentMonthYear);
+    insights.profitLastMonth += monthlyProfit(lastMonthYear);
+    insights.profitTwoMonthsAgo += monthlyProfit(twoMonthsAgoYear);
+    insights.profitThreeMonthsAgo += monthlyProfit(threeMonthsAgoYear);
+    insights.profitFourMonthsAgo += monthlyProfit(fourMonthsAgoYear);
+    insights.profitFiveMonthsAgo += monthlyProfit(fiveMonthsAgoYear);
+    insights.profitSixMonthsAgo += monthlyProfit(sixMonthsAgoYear);
 
-    // Calculate profit for this month, last month, and two months ago
-    const profitCurrent = valueSoldThisMonth - valueAddedThisMonth;
-    const profitPrevious =
-      (stock.monthlySoldValue.get(lastMonthYear) || 0) - (stock.monthlyStockValue.get(lastMonthYear) || 0);
-    const profitTwoAgo =
-      (stock.monthlySoldValue.get(twoMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(twoMonthsAgoYear) || 0);
-    const profitThreeAgo =
-      (stock.monthlySoldValue.get(threeMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(threeMonthsAgoYear) || 0);
-    const profitFourAgo =
-      (stock.monthlySoldValue.get(fourMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(fourMonthsAgoYear) || 0);
-    const profitFiveAgo =
-      (stock.monthlySoldValue.get(fiveMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(fiveMonthsAgoYear) || 0);
-    const profitSixAgo =
-      (stock.monthlySoldValue.get(sixMonthsAgoYear) || 0) - (stock.monthlyStockValue.get(sixMonthsAgoYear) || 0);
-    profitThisMonth += profitCurrent;
-    profitLastMonth += profitPrevious;
-    profitTwoMonthsAgo += profitTwoAgo;
-    profitThreeMonthsAgo += profitThreeAgo;
-    profitFourMonthsAgo += profitFourAgo;
-    profitFiveMonthsAgo += profitFiveAgo;
-    profitSixMonthsAgo += profitSixAgo;
+    // Collect metrics
+    metrics.added.push({
+      catNum: stock.catNum,
+      colNum: stock.colNum,
+      totalAdded: stockMetrics.totalAdded,
+    });
 
-    // Calculate overall profit for the item across all months
+    metrics.addedThisMonth.push({
+      catNum: stock.catNum,
+      colNum: stock.colNum,
+      addedThisMonth: stockMetrics.addedThisMonth,
+    });
+
+    // Sold metrics
+    metrics.sold.push({
+      catNum: stock.catNum,
+      colNum: stock.colNum,
+      totalSold: stockMetrics.totalSold,
+    });
+
+    metrics.soldThisMonth.push({
+      catNum: stock.catNum,
+      colNum: stock.colNum,
+      soldThisMonth: stockMetrics.soldThisMonth,
+    });
+
+    // Profitability metrics
+    const currentProfit = stockMetrics.valueSoldThisMonth - stockMetrics.valueAddedThisMonth;
     const overallProfit = [...stock.monthlySoldValue.entries()].reduce((total, [monthYear, soldValue]) => {
       const stockValue = stock.monthlyStockValue.get(monthYear) || 0;
       return total + (soldValue - stockValue);
     }, 0);
 
-    // Collect metrics for sorting
-    addedMetrics.push({
+    metrics.profitable.push({
       catNum: stock.catNum,
       colNum: stock.colNum,
-      totalAdded: [...stock.monthlyMeterAdded.values()].reduce((a, b) => a + b, 0),
+      profitCurrent: currentProfit,
     });
-    addedThisMonthMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, addedThisMonth });
-    soldMetrics.push({
+
+    metrics.overallProfitable.push({
       catNum: stock.catNum,
       colNum: stock.colNum,
-      totalSold: [...stock.monthlySold.values()].reduce((a, b) => a + b, 0),
+      overallProfit: overallProfit,
     });
-    soldThisMonthMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, soldThisMonth });
-    profitableMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, profitCurrent });
-    overallProfitableMetrics.push({ catNum: stock.catNum, colNum: stock.colNum, overallProfit });
-
-    // Determine most/least added/sold clothes
-
-    if (profitCurrent > maxProfit) {
-      maxProfit = profitCurrent;
-      mostProfitableClothes = stock;
-    }
   });
 
-  // Sort metrics and get top 5
-  const topAdded = addedMetrics.sort((a, b) => b.totalAdded - a.totalAdded).slice(0, 10);
-  const topAddedThisMonth = addedThisMonthMetrics.sort((a, b) => b.addedThisMonth - a.addedThisMonth).slice(0, 10);
-  const topSold = soldMetrics.sort((a, b) => b.totalSold - a.totalSold).slice(0, 10);
-  const topSoldThisMonth = soldThisMonthMetrics.sort((a, b) => b.soldThisMonth - a.soldThisMonth).slice(0, 10);
-  const leastSold = soldMetrics.sort((a, b) => a.totalSold - b.totalSold).slice(0, 10);
-  const leastSoldThisMonth = soldThisMonthMetrics.sort((a, b) => a.soldThisMonth - b.soldThisMonth).slice(0, 10);
-  const topProfitable = profitableMetrics.sort((a, b) => b.profitCurrent - a.profitCurrent).slice(0, 10);
-  const topOverallProfitable = overallProfitableMetrics.sort((a, b) => b.overallProfit - a.overallProfit).slice(0, 10);
-  // Sort the array by profit and get the top 5 items
+  // Apply expenses and discounts to profits
+  const adjustProfit = (profit, month) => {
+    return profit - (expensesByMonth[month] || 0) - (discountsByMonth[month] || 0);
+  };
+
+  insights.profitThisMonth = adjustProfit(insights.profitThisMonth, currentMonthYear);
+  insights.profitLastMonth = adjustProfit(insights.profitLastMonth, lastMonthYear);
+  insights.profitTwoMonthsAgo = adjustProfit(insights.profitTwoMonthsAgo, twoMonthsAgoYear);
+  insights.profitThreeMonthsAgo = adjustProfit(insights.profitThreeMonthsAgo, threeMonthsAgoYear);
+  insights.profitFourMonthsAgo = adjustProfit(insights.profitFourMonthsAgo, fourMonthsAgoYear);
+  insights.profitFiveMonthsAgo = adjustProfit(insights.profitFiveMonthsAgo, fiveMonthsAgoYear);
+  insights.profitSixMonthsAgo = adjustProfit(insights.profitSixMonthsAgo, sixMonthsAgoYear);
+
+  // Sort and slice metrics
+  insights.mostAddedClothes = metrics.added.sort((a, b) => b.totalAdded - a.totalAdded).slice(0, 10);
+  insights.mostAddedClothesThisMonth = metrics.addedThisMonth
+    .sort((a, b) => b.addedThisMonth - a.addedThisMonth)
+    .slice(0, 10);
+  // Sort and slice all metrics
+  insights.mostAddedClothes = metrics.added.sort((a, b) => b.totalAdded - a.totalAdded).slice(0, 10);
+  insights.mostAddedClothesThisMonth = metrics.addedThisMonth
+    .sort((a, b) => b.addedThisMonth - a.addedThisMonth)
+    .slice(0, 10);
+
+  insights.mostSoldClothes = metrics.sold.sort((a, b) => b.totalSold - a.totalSold).slice(0, 10);
+  insights.mostSoldClothesThisMonth = metrics.soldThisMonth
+    .sort((a, b) => b.soldThisMonth - a.soldThisMonth)
+    .slice(0, 10);
+
+  insights.leastSoldClothes = metrics.sold.sort((a, b) => a.totalSold - b.totalSold).slice(0, 10);
+  insights.leastSoldClothesThisMonth = metrics.soldThisMonth
+    .sort((a, b) => a.soldThisMonth - b.soldThisMonth)
+    .slice(0, 10);
+
+  insights.mostProfitableClothes = metrics.profitable.sort((a, b) => b.profitCurrent - a.profitCurrent).slice(0, 10);
+  insights.mostProfitableClothesOverall = metrics.overallProfitable
+    .sort((a, b) => b.overallProfit - a.overallProfit)
+    .slice(0, 10);
 
   res.status(200).json({
     status: "success",
-    insights: {
-      totalMeterAdded,
-      totalMeterAddedThisMonth,
-      totalValueStockAdded,
-      totalValueStockAddedThisMonth,
-      totalMeterSold,
-      totalMeterSoldThisMonth,
-      totalValueSold,
-      totalValueSoldThisMonth,
-      profitThisMonth,
-      profitLastMonth,
-      profitTwoMonthsAgo,
-      profitThreeMonthsAgo,
-      profitFourMonthsAgo,
-      profitFiveMonthsAgo,
-      profitSixMonthsAgo,
-      mostAddedClothes: topAdded,
-      mostAddedClothesThisMonth: topAddedThisMonth,
-      mostSoldClothes: topSold,
-      mostSoldClothesThisMonth: topSoldThisMonth,
-      leastSoldClothes: leastSold,
-      leastSoldClothesThisMonth: leastSoldThisMonth,
-      mostProfitableClothes: topProfitable,
-      mostProfitableClothesOverall: topOverallProfitable,
-    },
+    insights,
   });
 });

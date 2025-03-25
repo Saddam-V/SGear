@@ -5,6 +5,7 @@ const factory = require("./handlerFactory");
 const AppError = require("../utils/appError");
 const TotalStock = require("../models/totalStockModel");
 const Bill = require("../models/billModel");
+const MonthlyDiscount = require("../models/discountModel");
 const totalStockController = require("../controllers/totalStockController");
 const stockTransaction = require("../controllers/stockTransactionController");
 const Catalogue = require("../models/catModel");
@@ -73,6 +74,7 @@ exports.getReturnNum = catchAsync(async (req, res, next) => {
 exports.createReturn = catchAsync(async (req, res, next) => {
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
   const billNum = req.body.billNum; // Get billNum from request
+  const currentMonth = moment().format("MM-YYYY"); // Get current month and year
 
   console.log(billNum);
 
@@ -129,6 +131,14 @@ exports.createReturn = catchAsync(async (req, res, next) => {
 
     // Delete the Bill from the History
     await Bill.deleteOne({ _id: billNum });
+
+    // **Key Change: Store Monthly Discount**
+    const existingMonthlyDiscount = await MonthlyDiscount.findOne({ month: currentMonth });
+
+    if (existingMonthlyDiscount) {
+      existingMonthlyDiscount.totalDiscount -= bill.priceDiscount;
+      await existingMonthlyDiscount.save();
+    }
 
     // Send Response
     res.status(200).json({ data: returnOrderData });

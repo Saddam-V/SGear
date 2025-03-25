@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const stockSchema = new mongoose.Schema({
   catNum: {
-    type: Number,
+    type: String,
     required: [true, "A Catalogue must have a name"],
     trim: true,
   },

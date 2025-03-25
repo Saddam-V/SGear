@@ -27,15 +27,17 @@ exports.createStock = catchAsync(async (req, res, next) => {
   catNum = req.body.catNum;
   const catalog = await Catalogue.findOne({ catNum });
   if (!catalog) {
+    console.log(1);
     return next(new AppError("Catalog not found", 404));
   }
 
   // Find the color entry in the catalog
   const colorEntry = await catalog.orders.find((order) => order.colNum === req.body.colNum);
   if (!colorEntry) {
+    console.log(2);
     return next(new AppError("Color not found in the catalog", 404));
   }
-
+  console.log(3);
   req.body.rate = colorEntry.rate;
   req.body.buyingRate = colorEntry.buyingRate;
 

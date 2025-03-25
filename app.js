@@ -10,6 +10,8 @@ const catRouter = require("./routes/catRoutes");
 const custRouter = require("./routes/custRoutes");
 const returnRouter = require("./routes/returnRoutes");
 const userRouter = require("./routes/userRoutes");
+const expenseRouter = require("./routes/expenseRoutes");
+const discountRouter = require("./routes/discountRoutes");
 const cookieParser = require("cookie-parser");
 const compression = require("compression");
 
@@ -46,6 +48,8 @@ app.use("/api/v1/catalogue/", catRouter);
 app.use("/api/v1/customer/", custRouter);
 app.use("/api/v1/return/", returnRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/expenses", expenseRouter);
+app.use("/api/monthlyDiscounts", discountRouter);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));

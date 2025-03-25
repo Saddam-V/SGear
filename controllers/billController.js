@@ -9,6 +9,7 @@ const Bill = require("../models/billModel");
 var fs = require("fs");
 const Catalogue = require("../models/catModel");
 const Cust = require("../models/custModel");
+const MonthlyDiscount = require("../models/discountModel");
 const moment = require("moment");
 const mongoose = require("mongoose");
 const getBillNum = require("../utils/getBillNum");
@@ -170,6 +171,7 @@ exports.createBill = catchAsync(async (req, res, next) => {
   }
 
   const currentDateTime = moment().format("YYYY-MM-DD-HH:mm:ss");
+  const currentMonth = moment().format("MM-YYYY"); // Get current month and year
 
   const myobj = {
     custName: customerName,
@@ -198,6 +200,19 @@ exports.createBill = catchAsync(async (req, res, next) => {
   if (customer) {
     await customer.orders.push(...data);
     await Cust.updateOne({ _id: customerId }, customer);
+  }
+
+  // **Key Change: Store Monthly Discount**
+  const existingMonthlyDiscount = await MonthlyDiscount.findOne({ month: currentMonth });
+
+  if (existingMonthlyDiscount) {
+    existingMonthlyDiscount.totalDiscount += discount;
+    await existingMonthlyDiscount.save();
+  } else {
+    await MonthlyDiscount.create({
+      month: currentMonth,
+      totalDiscount: discount,
+    });
   }
 
   res.status(200).json({

@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const transactionSchema = new Schema({
   catNum: {
-    type: Number,
+    type: String,
     required: [true, "A Catalogue must have a name"],
     trim: true,
   },
