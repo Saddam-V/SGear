@@ -13,8 +13,7 @@ dotenv.config({ path: "./config.env" }); // Load environment variables
 const app = require("./app");
 
 // Database connection
-const DB =
-  "mongodb://127.0.0.1:27017/SamsLocal?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+1.8.0";
+const DB = process.env.DATABASE.replace("<PASSWORD>", process.env.DATABASE_PASSWORD);
 mongoose
   .connect(DB, {
     useNewUrlParser: true,
@@ -37,7 +36,7 @@ app.get("*", (req, res) => {
 // Start server
 const port = process.env.PORT || 4000;
 const server = app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`port`);
 });
 
 // Handle unhandled rejections
